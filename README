@@ -1,15 +1,14 @@
 HardView
-December 2012
-Scott Lowrey
+Scott Lowrey sdlowrey@gmail.com
 
-HardView is a tool that shows you the hardware components that make up
-a computer system.  You can see the system from one or more
+HardView is a Linux tool that shows you the hardware components that
+make up a computer system.  You can see the system from one or more
 perspectives including bus type, function, and subsystem.
+
+The intent is to bring several Linux tools together into one place and
+provide various ways to view and format the collective information.
 
 For help with command line use, see 'hardview --help'.  
 
 To see command line options, invoke 'man hardview'.
-
-For design information, see the documents in the design directory of
-the source distribution.
 
