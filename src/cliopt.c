@@ -27,6 +27,8 @@ int parse_cmdline(int argc, char * const argv[])
 		case 'h':
 			opt.flags |= OPT_HELP;
 			break;
+		case '?':
+			return EXIT_FAILURE;
 		}
 	}
 	return 0;
