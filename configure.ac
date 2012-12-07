@@ -1,7 +1,7 @@
 AC_PREREQ(2.59)
 AC_INIT(hardview, 1.0)
 
-# PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE()
@@ -10,5 +10,5 @@ AC_PROG_CC
 AC_PROG_RANLIB
 AM_PROG_CC_C_O
 
-AC_CONFIG_FILES(Makefile src/Makefile)
+AC_CONFIG_FILES(Makefile src/Makefile tests/Makefile)
 AC_OUTPUT

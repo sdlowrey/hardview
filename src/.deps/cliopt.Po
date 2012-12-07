@@ -1,0 +1,3 @@
+cliopt.o: cliopt.c cliopt.h
+
+cliopt.h:

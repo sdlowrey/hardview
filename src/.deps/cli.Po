@@ -1,1 +1,3 @@
-cli.o: cli.c
+cli.o: cli.c cliopt.h
+
+cliopt.h:

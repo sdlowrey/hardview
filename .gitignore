@@ -17,3 +17,11 @@ tramp
 # Autotools
 config.*
 Makefile
+*/Makefile.in
+Makefile.in
+autom4te.cache
+
+# Compiled
+*.o
+*.a
+hardview
