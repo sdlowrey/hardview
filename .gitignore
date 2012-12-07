@@ -13,3 +13,7 @@ tramp
 
 # LibreOffice
 .~*
+
+# Autotools
+config.*
+Makefile
