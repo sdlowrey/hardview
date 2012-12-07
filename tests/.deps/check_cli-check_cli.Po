@@ -15,7 +15,8 @@ check_cli-check_cli.o: check_cli.c /usr/include/check.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.7.2/include/stdarg.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
  /usr/include/bits/stdio.h /usr/include/bits/waitflags.h \
- /usr/include/bits/waitstatus.h /usr/include/alloca.h ../src/cliopt.h
+ /usr/include/bits/waitstatus.h /usr/include/alloca.h ../src/cliopt.h \
+ /usr/include/getopt.h
 
 /usr/include/check.h:
 
@@ -90,3 +91,5 @@ check_cli-check_cli.o: check_cli.c /usr/include/check.h \
 /usr/include/alloca.h:
 
 ../src/cliopt.h:
+
+/usr/include/getopt.h:

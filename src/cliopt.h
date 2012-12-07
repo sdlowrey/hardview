@@ -1,5 +1,8 @@
 #ifndef CLIOPT_H_
 #define CLIOPT_H_
+
+#include <getopt.h>
+
 #define OPT_HELP       (1 << 0)
 
 struct cmdline_options
@@ -8,6 +11,6 @@ struct cmdline_options
 };
 extern struct cmdline_options opt;
 
-int parse_cmdline(int argc, const char *argv[]);
+int parse_cmdline(int argc, char * const argv[]);
 
 #endif /* CLIOPT_H_ */
