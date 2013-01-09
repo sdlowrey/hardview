@@ -16,9 +16,13 @@ tramp
 
 # Autotools
 config.*
+configure
 Makefile
+Makefile.in
+*/Makefile.in
 autom4te.cache
 */.deps
+aclocal.m4
 
 # Compiled
 *.o
