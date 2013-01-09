@@ -23,6 +23,8 @@ Makefile.in
 autom4te.cache
 */.deps
 aclocal.m4
+libtool
+ltmain.sh
 
 # Compiled
 *.o
