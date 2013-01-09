@@ -18,6 +18,7 @@ tramp
 config.*
 Makefile
 autom4te.cache
+*/.deps
 
 # Compiled
 *.o
