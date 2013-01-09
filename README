@@ -12,3 +12,12 @@ For help with command line use, see 'hardview --help'.
 
 To see command line options, invoke 'man hardview'.
 
+Developer Notes
+
+If cloning from git, you must run the following commands to set up GNU
+autotools:
+
+  # aclocal
+  # autoreconf -i
+
+From there, you can follow the instructions in INSTALL.
