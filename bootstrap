@@ -1,0 +1,6 @@
+#!/bin/bash
+#
+# Generate all autotools files from fresh source
+
+aclocal
+autoreconf -i
