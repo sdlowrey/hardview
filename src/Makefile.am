@@ -1,7 +1,6 @@
 noinst_LIBRARIES = libhardview.a libnewview.a
-libhardview_a_SOURCES = cliopt.c
+libhardview_a_SOURCES = SmBios.cpp
 
 bin_PROGRAMS = hardview
 hardview_SOURCES = hardview.cpp
-
-libnewview_a_SOURCES = Collector.cpp OsCollector.cpp Session.cpp
+hardview_LDADD = libhardview.a
