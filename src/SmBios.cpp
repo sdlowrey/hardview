@@ -69,7 +69,6 @@ bool SmBios::getNonEfiEntryPoint(string path)
 		}
 	}
 	
-	
 	free(buf);
 	return true;
 };

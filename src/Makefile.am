@@ -1,3 +1,4 @@
+AM_CPPFLAGS = -std=c++0x
 noinst_LIBRARIES = libhardview.a libnewview.a
 libhardview_a_SOURCES = SmBios.cpp
 
