@@ -41,6 +41,7 @@ bool SmBios::decode()
 // allocates memory
 u8 *SmBios::getNonEfiEntryPoint()
 {
+	printf("%s: path: %s\n", __func__, path.c_str()); 
 	int fd = open(path.c_str(), O_RDONLY);
 	if (fd == -1) {
 		perror_(path);
