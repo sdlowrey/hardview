@@ -40,7 +40,7 @@ bool SmBios::getNonEfiEntryPoint(string path)
 		return false;
 	}
 	
-	// map a range of physical memory into process virtual space
+	// map 64K memory into process virtual space
 	const size_t base = 0xF0000; // smbios 2.7.1, sec. 5.2.1
 	const size_t offset = base % sysconf(_SC_PAGESIZE);
 	const size_t len = 0x10000;
@@ -52,7 +52,7 @@ bool SmBios::getNonEfiEntryPoint(string path)
 	}
 
 	// copy mapped memory into our own buffer
-	void *buf = malloc(len);
+	u8 *buf = (u8 *)malloc(len);
 	if (buf == NULL) {
 		perror_("malloc");
 		return false;
@@ -62,14 +62,23 @@ bool SmBios::getNonEfiEntryPoint(string path)
 		perror_("munmap");
 	}
 
+	// find the entry point
 	for (size_t fp = 0; fp < 0xFFF0; fp += 16) {
 		if (memcmp((unsigned char *)buf + fp, "_SM_", 4) == 0 && fp <= 0xFFE0) {
-			log("found smbios anchor! fp: " + to_string(fp));
+			smbuf = buf + fp;
+			log("smb found");
 		} else if (memcmp((unsigned char *)buf + fp, "_DMI_", 5) == 0) {
-			log("found legacy anchor! fp: " + to_string(fp));
+			log("dmi found");
 		}
 	}
 	
+	// The contents of the Entry Point can be referenced like a char array
+	if (smbuf) {		
+		u8 eplen = smbuf[0x05];
+		if (eplen != 0x1f && eplen != 0x1e) {
+			log("Warning: unexpected SMBIOS entry point length");
+		}
+	}
 	free(buf);
 	return true;
 };

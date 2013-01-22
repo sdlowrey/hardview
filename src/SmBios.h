@@ -16,6 +16,7 @@ private:
 	bool getNonEfiEntryPoint(std::string path);
 	bool getEfiEntryPoint(std::string path);
 
+	u8 *smbuf;
 	u8 majorVer;
 	u8 minorVer;
 };
