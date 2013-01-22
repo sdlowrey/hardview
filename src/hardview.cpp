@@ -12,5 +12,9 @@ void log(string msg)
 
 int main(int argc, char * const argv[])
 {
-        SmBios bios;  // instantiate this system's bios
+        SmBios smbios("/dev/mem");
+	if (! smbios.decode()) {
+		log("Unable to decode SMBios");
+		return 1;  // TODO error codes?
+	}
 }
