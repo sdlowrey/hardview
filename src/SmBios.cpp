@@ -17,6 +17,17 @@ void perror_(string msg)
 	perror(msg.c_str());
 }
 
+// from dmidecode util.c
+int checksum(const u8 *buf, size_t len)
+{
+	u8 sum = 0;
+	size_t a;
+
+	for (a = 0; a < len; a++)
+		sum += buf[a];
+	return (sum == 0);
+}
+
 // TODO move to a global debug function
 void SmBios::log(string msg)
 {
@@ -34,7 +45,10 @@ bool SmBios::decode()
 		log("failed to find non-EFI entry point");
 		return false;
 	}
-	parseEntryPoint(buf);
+	if (!parseEntryPoint(buf)) {
+		log("failed to parse entry point");
+		return false;
+	}
 };
 
 // this code (c) Alan Cox, Jean Delvare
@@ -83,7 +97,20 @@ u8 *SmBios::getNonEfiEntryPoint()
 	return found ? entry : NULL;
 };
 
-void SmBios::parseEntryPoint(u8 *ep) 
+bool SmBios::parseEntryPoint(u8 *ep) 
 {
-	printf("%s: unimplemented\n", __func__);
+	printf("entry: 0x%08X\n", ep);
+
+	size_t eplen = ep[0x05];
+	if (eplen < 0x1f) return false;
+	if (!checksum(ep, ep[0x05])) return false;
+
+	majorVer = ep[0x06];
+	minorVer = ep[0x07];
+	tableLen = WORD(ep+0x16);
+	tablePtr = DWORD(ep+0x18);
+	printf("version: %u.%u\n", majorVer, minorVer);
+	printf("len: %u\n", tableLen);
+	printf("add: 0x%08X\n", tablePtr);
+	return true;
 };
