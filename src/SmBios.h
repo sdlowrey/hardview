@@ -42,15 +42,20 @@ public:
 	SmBios();
 	SmBios(std::string p) : path(p) {};
 	bool decode();
+	const std::string getVersion();
+
 private:
 	void log(std::string);
 	u8 *getNonEfiEntryPoint();
 	u8 *getEfiEntryPoint() {};
-	bool parseEntryPoint(u8 *ep);
+	bool parseEntryPoint();
 
 	const std::string path;
+	
+	u8 *buf; // 64K mapped chunk where BIOS lives
 	u8 majorVer;
 	u8 minorVer;
 	u16 tableLen;
 	u32 tablePtr;
+	u16 nStructs;
 };

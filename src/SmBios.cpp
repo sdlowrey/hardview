@@ -40,19 +40,17 @@ SmBios::SmBios()
 
 bool SmBios::decode() 
 {
-	u8 *buf;
 	if ((buf = getNonEfiEntryPoint()) == NULL)  {
 		log("failed to find non-EFI entry point");
 		return false;
 	}
-	if (!parseEntryPoint(buf)) {
+	if (!parseEntryPoint()) {
 		log("failed to parse entry point");
 		return false;
 	}
 };
 
-// this code (c) Alan Cox, Jean Delvare
-// allocates memory
+// this algorithm from dmidecode.c; allocates memory
 u8 *SmBios::getNonEfiEntryPoint()
 {
 	printf("%s: path: %s\n", __func__, path.c_str()); 
@@ -74,7 +72,7 @@ u8 *SmBios::getNonEfiEntryPoint()
 	}
 
 	// copy mapped memory into our own buffer
-	u8 *buf = (u8 *)malloc(len);
+	buf = (u8 *)malloc(len);
 	if (buf == NULL) {
 		perror_("malloc");
 		return NULL;
@@ -97,20 +95,29 @@ u8 *SmBios::getNonEfiEntryPoint()
 	return found ? entry : NULL;
 };
 
-bool SmBios::parseEntryPoint(u8 *ep) 
+bool SmBios::parseEntryPoint() 
 {
-	printf("entry: 0x%08X\n", ep);
-
-	size_t eplen = ep[0x05];
-	if (eplen < 0x1f) return false;
-	if (!checksum(ep, ep[0x05])) return false;
-
-	majorVer = ep[0x06];
-	minorVer = ep[0x07];
-	tableLen = WORD(ep+0x16);
-	tablePtr = DWORD(ep+0x18);
-	printf("version: %u.%u\n", majorVer, minorVer);
-	printf("len: %u\n", tableLen);
-	printf("add: 0x%08X\n", tablePtr);
+	size_t eplen = buf[0x05];
+	if (eplen < 0x1f || !checksum(buf, buf[0x05])
+	    || memcmp("_DMI_", buf + 0x10, 5) != 0
+	    || !checksum(buf + 0x10, 0x0f)) {
+		log ("Invalid SMBios entry point structure");
+		return false;
+	}
+	majorVer = buf[0x06];
+	minorVer = buf[0x07];
+	tableLen = WORD(buf+0x16);
+	tablePtr = DWORD(buf+0x18);
+	nStructs = WORD(buf+0x1c);
 	return true;
+};
+
+const string SmBios::getVersion()
+{
+	size_t maxlen = 6;
+	char s[maxlen];
+	if (snprintf(s, maxlen, "%u.%u", majorVer, minorVer) >= maxlen) {
+		log("warning: version truncated");
+	}
+	return string(s);
 };

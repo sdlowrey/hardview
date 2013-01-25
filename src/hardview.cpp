@@ -21,4 +21,5 @@ int main(int argc, char * const argv[])
 		log("Unable to decode SMBios");
 		return 1;  // TODO error codes?
 	}
+	cout << "SMBios Version: " + smbios.getVersion() << endl;
 }
