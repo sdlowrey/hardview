@@ -40,7 +40,9 @@ static inline u64 U64(u32 low, u32 high)
 class SmBios {
 public:
 	SmBios();
-	SmBios(std::string p) : path(p) {};
+	SmBios(std::string p) : path(p) { buf = nullptr; };
+	~SmBios();
+
 	bool decode();
 	const std::string getVersion();
 
@@ -53,6 +55,7 @@ private:
 	const std::string path;
 	
 	u8 *buf; // 64K mapped chunk where BIOS lives
+	u8 *ep; // start of SMBIOS Entry Point struct
 	u8 majorVer;
 	u8 minorVer;
 	u16 tableLen;

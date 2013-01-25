@@ -36,11 +36,18 @@ void SmBios::log(string msg)
 
 SmBios::SmBios()
 {
+	buf = nullptr;
+};
+
+SmBios::~SmBios() {
+	if (buf != nullptr) {
+		free(buf);
+	}
 };
 
 bool SmBios::decode() 
 {
-	if ((buf = getNonEfiEntryPoint()) == NULL)  {
+	if ((ep = getNonEfiEntryPoint()) == NULL)  {
 		log("failed to find non-EFI entry point");
 		return false;
 	}
@@ -97,18 +104,18 @@ u8 *SmBios::getNonEfiEntryPoint()
 
 bool SmBios::parseEntryPoint() 
 {
-	size_t eplen = buf[0x05];
-	if (eplen < 0x1f || !checksum(buf, buf[0x05])
-	    || memcmp("_DMI_", buf + 0x10, 5) != 0
-	    || !checksum(buf + 0x10, 0x0f)) {
+	size_t eplen = ep[0x05];
+	if (eplen < 0x1f || !checksum(ep, ep[0x05])
+	    || memcmp("_DMI_", ep + 0x10, 5) != 0
+	    || !checksum(ep + 0x10, 0x0f)) {
 		log ("Invalid SMBios entry point structure");
 		return false;
 	}
-	majorVer = buf[0x06];
-	minorVer = buf[0x07];
-	tableLen = WORD(buf+0x16);
-	tablePtr = DWORD(buf+0x18);
-	nStructs = WORD(buf+0x1c);
+	majorVer = ep[0x06];
+	minorVer = ep[0x07];
+	tableLen = WORD(ep+0x16);
+	tablePtr = DWORD(ep+0x18);
+	nStructs = WORD(ep+0x1c);
 	return true;
 };
 
