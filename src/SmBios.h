@@ -14,7 +14,13 @@ typedef unsigned long u64;
 #define ALIGNMENT_WORKAROUND
 #endif
 
-#ifdef ALIGNMENT_WORKAROUND
+// Use C++ explicit named casts for machines not requiring the workaround
+// These are easier to read and understand than dmidecode C-style casts
+#ifndef ALIGNMENT_WORKAROUND
+#	define WORD(x) *reinterpret_cast<u16*>(x)
+#	define DWORD(x) *reinterpret_cast<u32*>(x)
+#	define QWORD(x) *reinterpret_cast<u64*>(x)
+#else /* ALIGNMENT_WORKAROUND - use C-style casts*/
 static inline u64 U64(u32 low, u32 high)
 {
 	u64 self;
@@ -27,10 +33,6 @@ static inline u64 U64(u32 low, u32 high)
 #	define WORD(x) (u16)((x)[0] + ((x)[1] << 8))
 #	define DWORD(x) (u32)((x)[0] + ((x)[1] << 8) + ((x)[2] << 16) + ((x)[3] << 24))
 #	define QWORD(x) (U64(DWORD(x), DWORD(x + 4)))
-#else /* ALIGNMENT_WORKAROUND */
-#	define WORD(x) (u16)(*(const u16 *)(x))
-#	define DWORD(x) (u32)(*(const u32 *)(x))
-#	define QWORD(x) (*(const u64 *)(x))
 #endif /* ALIGNMENT_WORKAROUND */
 
 /**

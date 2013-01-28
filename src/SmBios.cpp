@@ -114,19 +114,20 @@ bool SmBios::parseEfiEntryPoint()
 
 	majorVer = ep[0x06];
 	minorVer = ep[0x07];
-	maxSize = WORD(ep+0x08);
-	tableLen = WORD(ep+0x16);
-	tablePtr = DWORD(ep+0x18);
-	nStructs = WORD(ep+0x1c);
+	maxSize = WORD(ep + 0x08);
+	tableLen = WORD(ep + 0x16);
+	tablePtr = DWORD(ep + 0x18);
+	nStructs = WORD(ep + 0x1c);
 
-	free(membuf);
+	printf("SMBios %u.%u\nStructures: %d  Max Size: %d bytes\nTable is %d bytes starting at 0x%08X\n", 
+	       majorVer, minorVer, nStructs, maxSize, tableLen, tablePtr);
+
+	parseTable();
 	return true;
 };
 
 bool SmBios::parseTable()
 {
-	// map the table starting at tablePtr to a new buffer
-	u8 *buf = (u8 *)copymem(tablePtr, tableLen, path);
 	log("not implemented");
 	return true;
 };
