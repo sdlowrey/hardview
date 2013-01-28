@@ -1,4 +1,5 @@
 #include <iostream>  // can remove when debug log impl
+#include <vector>
 
 // C headers
 #include <fcntl.h>
@@ -29,7 +30,7 @@ int checksum(const u8 *buf, size_t len)
 }
 
 // based on dmidecode mem_chunk
-void * copymem(const size_t base, const size_t len, const string path)
+u8 * copymem(const size_t base, const size_t len, const string path)
 {
 	int fd = open(path.c_str(), O_RDONLY);
 	if (fd == -1) {
@@ -122,13 +123,72 @@ bool SmBios::parseEfiEntryPoint()
 	printf("SMBios %u.%u\nStructures: %d  Max Size: %d bytes\nTable is %d bytes starting at 0x%08X\n", 
 	       majorVer, minorVer, nStructs, maxSize, tableLen, tablePtr);
 
-	parseTable();
 	return true;
 };
 
 bool SmBios::parseTable()
 {
-	log("not implemented");
+	struct structHeader {
+		u8 type;
+		u8 len;
+		u16 handle;
+	} h;
+	u8 *buf = copymem(tablePtr, tableLen, path);
+	
+	u8 *p = buf;
+	h.type = p[0x00];
+	h.len = p[0x01];
+	h.handle = WORD(p + 0x02);
+	printf("first struct is type %d, %d bytes, handle 0X%04X\n",
+	       h.type, h.len, h.handle);
+
+	p += h.len;  // point to start of strings
+	vector<string> v;
+	string s;
+	while (*p) {
+		v.push_back(reinterpret_cast<char*>(p));
+		p += strlen(reinterpret_cast<char*>(p)) + 1;
+	}
+	for(auto itr = v.cbegin(); itr != v.cend(); ++itr)
+		log(*itr);
+	/***************iterate*****************/
+	p++;
+	h.type = p[0x00];
+	h.len = p[0x01];
+	h.handle = WORD(p + 0x02);
+	printf("next struct is type %d, %d bytes, handle 0X%04X\n",
+	       h.type, h.len, h.handle);
+	p += h.len;  // point to start of strings
+
+	// should scan string indexes in struct first, only do vector
+	// ops if at least one index is non-zero.
+	v.clear();
+	while (*p) {
+		v.push_back(reinterpret_cast<char*>(p));
+		p += strlen(reinterpret_cast<char*>(p)) + 1;
+	}
+	for(auto itr = v.cbegin(); itr != v.cend(); ++itr)
+		log(*itr);
+	/***************iterate*****************/
+	p++;
+	h.type = p[0x00];
+	h.len = p[0x01];
+	h.handle = WORD(p + 0x02);
+	printf("next struct is type %d, %d bytes, handle 0X%04X\n",
+	       h.type, h.len, h.handle);
+	p += h.len;  // point to start of strings
+
+	// should scan string indexes in struct first, only do vector
+	// ops if at least one index is non-zero.
+	v.clear();
+	while (*p) {
+		v.push_back(reinterpret_cast<char*>(p));
+		p += strlen(reinterpret_cast<char*>(p)) + 1;
+	}
+	for(auto itr = v.cbegin(); itr != v.cend(); ++itr)
+		log(*itr);
+	
+	free(buf);
 	return true;
 };
 

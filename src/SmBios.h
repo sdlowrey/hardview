@@ -61,4 +61,5 @@ private:
 	u16 tableLen;
 	u32 tablePtr;
 	u16 nStructs;
+
 };
