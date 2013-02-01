@@ -62,7 +62,7 @@ u8 * copymem(const size_t base, const size_t len, const string path)
 };
 
 // TODO move to a global debug function
-void SmBios::log(string msg)
+void log(string msg)
 {
 	cout << msg << endl;
 };
@@ -83,6 +83,7 @@ bool SmBios::decode()
 	};
 };
 
+// allocates memory
 bool SmBios::parseEfiEntryPoint() 
 {
 	// SMBios Spec - 5.2.1
@@ -102,6 +103,7 @@ bool SmBios::parseEfiEntryPoint()
 	}
 	if (!found) {
 		log("Failed to find SMBios entry point");
+		free(membuf);
 		return false;
 	}
 
@@ -110,6 +112,7 @@ bool SmBios::parseEfiEntryPoint()
 	    || memcmp("_DMI_", ep + 0x10, 5) != 0
 	    || !checksum(ep + 0x10, 0x0f)) {
 		log ("Invalid SMBios entry point structure");
+		free(membuf);
 		return false;
 	}
 
@@ -123,71 +126,56 @@ bool SmBios::parseEfiEntryPoint()
 	printf("SMBios %u.%u\nStructures: %d  Max Size: %d bytes\nTable is %d bytes starting at 0x%08X\n", 
 	       majorVer, minorVer, nStructs, maxSize, tableLen, tablePtr);
 
+	free (membuf);
 	return true;
 };
 
+// Responsibility: Extract all the packed structs and return a vector
+// of "elements".
+//
+// Rationale: The packed SMBios structures are unwieldy for high-level
+// programming languages.  Also, we don't care about every single data
+// element in every structure.  Therefore, boil each one down to an
+// object that is easy to use and contains only what we need. 
+//
+// Elements are dynamically allocated because we don't know which
+// elements -- or how many of each -- are there.  A vector works well
+// as a container.
+//
+// Drawbacks: vector requires iteration to find elements of a certain
+// (sub) type.
+
+u8 * advance(u8 *p, u8 len) 
+{
+	p += len;
+	// walk to double null + 1;
+	printf("advancing to next struct");
+	while (! (WORD(p) == 0x0000)) {
+		printf(".");
+		p++;
+	}
+	printf("\n");
+}
+
+//allocates memory and frees it
 bool SmBios::parseTable()
 {
-	struct structHeader {
-		u8 type;
-		u8 len;
-		u16 handle;
-	} h;
 	u8 *buf = copymem(tablePtr, tableLen, path);
 	
 	u8 *p = buf;
-	h.type = p[0x00];
-	h.len = p[0x01];
-	h.handle = WORD(p + 0x02);
-	printf("first struct is type %d, %d bytes, handle 0X%04X\n",
-	       h.type, h.len, h.handle);
+	SmElementFactory elementFactory;
+	SmElement *element;
 
-	p += h.len;  // point to start of strings
-	vector<string> v;
-	string s;
-	while (*p) {
-		v.push_back(reinterpret_cast<char*>(p));
-		p += strlen(reinterpret_cast<char*>(p)) + 1;
+	for (int i = 0; i < nStructs; ++i) {
+		element = elementFactory.create(p);
+		if (element == nullptr) {
+			p = advance(p, element->len);
+			continue;
+		}
+		elem.push_back(*element);
+		advance(p, element->len);
+		// validate the pointer based on tableLen?
 	}
-	for(auto itr = v.cbegin(); itr != v.cend(); ++itr)
-		log(*itr);
-	/***************iterate*****************/
-	p++;
-	h.type = p[0x00];
-	h.len = p[0x01];
-	h.handle = WORD(p + 0x02);
-	printf("next struct is type %d, %d bytes, handle 0X%04X\n",
-	       h.type, h.len, h.handle);
-	p += h.len;  // point to start of strings
-
-	// should scan string indexes in struct first, only do vector
-	// ops if at least one index is non-zero.
-	v.clear();
-	while (*p) {
-		v.push_back(reinterpret_cast<char*>(p));
-		p += strlen(reinterpret_cast<char*>(p)) + 1;
-	}
-	for(auto itr = v.cbegin(); itr != v.cend(); ++itr)
-		log(*itr);
-	/***************iterate*****************/
-	p++;
-	h.type = p[0x00];
-	h.len = p[0x01];
-	h.handle = WORD(p + 0x02);
-	printf("next struct is type %d, %d bytes, handle 0X%04X\n",
-	       h.type, h.len, h.handle);
-	p += h.len;  // point to start of strings
-
-	// should scan string indexes in struct first, only do vector
-	// ops if at least one index is non-zero.
-	v.clear();
-	while (*p) {
-		v.push_back(reinterpret_cast<char*>(p));
-		p += strlen(reinterpret_cast<char*>(p)) + 1;
-	}
-	for(auto itr = v.cbegin(); itr != v.cend(); ++itr)
-		log(*itr);
-	
 	free(buf);
 	return true;
 };

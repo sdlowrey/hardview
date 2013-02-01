@@ -5,11 +5,6 @@
 
 using namespace std;
 
-void log(string msg)
-{
-	cout << msg << endl;
-}
-
 int main(int argc, char * const argv[])
 {
 	string path = "/dev/mem";
