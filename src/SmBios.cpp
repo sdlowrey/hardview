@@ -81,6 +81,7 @@ bool SmBios::decode()
 		log("failed to parse table");
 		return false;
 	};
+	return true;
 };
 
 // allocates memory
@@ -156,6 +157,7 @@ u8 * advance(u8 *p, u8 len)
 		p++;
 	}
 	printf("\n");
+	return p+2;
 }
 
 //allocates memory and frees it
@@ -168,13 +170,13 @@ bool SmBios::parseTable()
 	SmElement *element;
 
 	for (int i = 0; i < nStructs; ++i) {
+		u8 len = p[1];
 		element = elementFactory.create(p);
-		if (element == nullptr) {
-			p = advance(p, element->len);
-			continue;
+		// skip unsupported elements (null ptr)
+		if (element != nullptr) {
+			elem.push_back(*element);
 		}
-		elem.push_back(*element);
-		advance(p, element->len);
+		p = advance(p, len);
 		// validate the pointer based on tableLen?
 	}
 	free(buf);
