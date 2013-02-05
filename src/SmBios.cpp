@@ -86,10 +86,11 @@ bool SmBios::decode()
 // allocates memory
 bool SmBios::parseEfiEntryPoint() 
 {
-	// SMBios Spec - 5.2.1
+	// SMBios Spec 2.7, sec 5.2.1
 	const size_t base = 0xF0000;
 	const size_t len = 0x10000;
 	u8 *membuf = (u8 *)copymem(base, len, path);
+	if (membuf == NULL) return false;
 
 	// find the entry point
 	bool found = false;
