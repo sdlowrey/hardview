@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <stdexcept>
 
 #include "SmBios.h"
 
@@ -11,10 +12,11 @@ int main(int argc, char * const argv[])
 	if (argc > 1) {
 		path = argv[1];
 	}
-        SmBios smbios(path);
-	if (! smbios.decode()) {
-		log("Unable to decode SMBios");
-		return 1;  // TODO error codes?
+	SmBios smbios;
+	try {
+		smbios.decodePath(path);
+	} catch (runtime_error e) {
+		cout << e.what() << endl;
+		return 1;
 	}
-	cout << "SMBios Version: " + smbios.getVersion() << endl;
 }
