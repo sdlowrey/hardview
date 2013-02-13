@@ -9,14 +9,11 @@ using namespace std;
 int main(int argc, char * const argv[])
 {
 	string path = "/dev/mem";
-	if (argc > 1) {
-		path = argv[1];
-	}
-	SmBios smbios;
 	try {
-		smbios.decodePath(path);
+		SmBios smbios(path);
+		cout << &smbios << endl;
 	} catch (runtime_error e) {
 		cout << e.what() << endl;
-		return 1;
+	        return 1;
 	}
 }

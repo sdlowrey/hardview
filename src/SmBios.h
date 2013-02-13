@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "SmElement.h"
+#include "SmReader.h"
 #include "types.h"
 
 void log(std::string);
@@ -72,32 +73,22 @@ class SmBios
 {
 public:
 	SmBios() {};
-	SmBios(SmReader *);
+	SmBios(std::string path);
 
-	bool decodePath(std::string path);
 	void dumpTypes();
 
 	const std::string getVersion();
-	SmElement getElement(u8 type);
+	SmElement *getElement(u8 type);
+	SmReader *reader;  // public for the sake of << op
+
+protected:
 
 private:
-	SmReader *reader;
-	SmElement *elements;
 
-	u8 *getNonEfiEntryPoint();
-	bool parseEfiEntryPoint();
-	bool parseTable();
 	bool isValidType(u8 t);
 
-	std::string path;
-	
-	u8 majorVer;
-	u8 minorVer;
-	u16 maxSize;
-	u16 tableLen;
-	u32 tablePtr;
-	u16 nStructs;
-	std::vector<SmElement> elem;
+	std::string path;	
+	std::vector<SmElement> elements;
 
 };
 

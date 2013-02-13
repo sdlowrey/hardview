@@ -1,72 +1,41 @@
 #include <stdexcept>
 #include <string>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "SmReader.h"
 
 using namespace std;
 
-SmBinaryReader::SmBinaryReader(string path)
+// based on dmidecode mem_chunk: map file, copy to our buffer
+// can be moved to generic utility lib
+u8 * copymem(const size_t base, const size_t len, const string path)
 {
-	if (! pathContainsSmbios()) 
-		throw runtime_error("Unable to find SMBIOS data in " + path);
+	int fd = open(path.c_str(), O_RDONLY);
+	if (fd == -1) {
+		throw runtime_error("unable to open " + path);
+	}
 	
-	if (!parseEfiEntryPoint())
-		throw runtime_error("failed to parse entry point");
+	const size_t offset = base % sysconf(_SC_PAGESIZE);
 
-	if (!parseTable()) {
-		throw runtime_error("failed to parse table");
-	};
-}
-
-SmElement SmBinaryReader::getElement(u8 type)
-{
-}
-
-// allocates memory
-bool SmBinaryReader::parseEfiEntryPoint() 
-{
-	// SMBios Spec 2.7, sec 5.2.1
-	const size_t base = 0xF0000;
-	const size_t len = 0x10000;
-	u8 *membuf = (u8 *)copymem(base, len, path);
-	if (membuf == NULL) return false;
-
-	// find the entry point
-	bool found = false;
-	u8 *ep;
-	for (size_t fp = 0; fp < 0xFFF0; fp += 16) {
-		if (memcmp((unsigned char *)membuf + fp, "_SM_", 4) == 0 
-		    && fp <= 0xFFE0) {
-			ep = membuf + fp;
-			found = true;
-		}
-	}
-	if (!found) {
-		log("Failed to find SMBios entry point");
-		free(membuf);
-		return false;
+	void *m = mmap(NULL, offset + len, PROT_READ, MAP_SHARED, 
+		       fd, base - offset);
+	if (m == MAP_FAILED) {
+		throw runtime_error("unable to map file to memory");
 	}
 
-	size_t eplen = ep[0x05];
-	if (eplen < 0x1f || !checksum(ep, ep[0x05])
-	    || memcmp("_DMI_", ep + 0x10, 5) != 0
-	    || !checksum(ep + 0x10, 0x0f)) {
-		log ("Invalid SMBios entry point structure");
-		free(membuf);
-		return false;
+	u8 *buf = (u8 *)malloc(len);
+	if (buf == NULL) {
+		throw runtime_error("unable to allocate memory");
 	}
+	memcpy(buf, (u8 *)m + offset, len);
 
-	majorVer = ep[0x06];
-	minorVer = ep[0x07];
-	maxSize = WORD(ep + 0x08);
-	tableLen = WORD(ep + 0x16);
-	tablePtr = DWORD(ep + 0x18);
-	nStructs = WORD(ep + 0x1c);
-
-	printf("SMBios %u.%u\nStructures: %d  Max Size: %d bytes\nTable is %d bytes starting at 0x%08X\n", 
-	       majorVer, minorVer, nStructs, maxSize, tableLen, tablePtr);
-
-	free (membuf);
-	return true;
+	munmap(m, offset + len);  // don't care if this fails?
+	close(fd);
+	return buf;
 };
 
 u8 * advance(u8 *p, u8 len) 
@@ -93,34 +62,132 @@ int checksum(const u8 *buf, size_t len)
 	return (sum == 0);
 }
 
-// based on dmidecode mem_chunk
-u8 * copymem(const size_t base, const size_t len, const string path)
+SmReader::~SmReader()
 {
-	int fd = open(path.c_str(), O_RDONLY);
-	if (fd == -1) {
-		perror_(path);
-		return NULL;
-	}
-	
-	const size_t offset = base % sysconf(_SC_PAGESIZE);
+	cout << "SmReader destructor" << endl;
+}
 
-	void *m = mmap(NULL, offset + len, PROT_READ, MAP_SHARED, 
-		       fd, base - offset);
-	if (m == MAP_FAILED) {
-		perror_("mmap");
-		return NULL;
+SmBinaryReader::SmBinaryReader(string p)
+{
+	// verify path is accessible
+	path = p;
+	try {
+		processEntryPoint();
+		cout << "found it.. ";
+	}
+	catch (runtime_error err) {
+		throw;
 	}
 
-	// copy mapped memory into our own buffer
-	u8 *buf = (u8 *)malloc(len);
-	if (buf == NULL) {
-		perror_("malloc");
-		return NULL;
-	}
-	memcpy(buf, (u8 *)m + offset, len);
-	if (munmap(m, offset + len) == -1) {
-		perror_("munmap");
-	}
-	close(fd);
-	return buf;
+	table = copymem(tablePtr, tableLen, path);
+	cout << "got it" << endl;
 };
+
+SmBinaryReader::~SmBinaryReader()
+{
+	free(table);
+};
+
+vector<SmElement> SmBinaryReader::getAllElements()
+{
+	cout << "nstructs: " << nStructs << endl;
+	u8 *p = reinterpret_cast<u8 *>(tablePtr);
+	SmElementFactory elementFactory;
+	SmElement *element;
+	vector<SmElement> elements;
+
+	for (int i = 0; i < nStructs; ++i) {
+		cout << ".";
+		u8 len = p[1];
+		element = elementFactory.create(p);
+		// skip unsupported elements (null ptr)
+		if (element != nullptr) {
+			elements.push_back(*element);
+		}
+		p = advance(p, len);
+		// validate the pointer based on tableLen?
+	}
+	cout << endl << "processed " << nStructs << " structures" << endl;
+	return elements;
+};
+
+SmElement *SmBinaryReader::getElement(u8 t)
+{
+};
+
+std::string SmReader::getVersion()
+{
+	size_t maxlen = 6;
+	char s[maxlen];
+	if (snprintf(s, maxlen, "%u.%u", majorVer, minorVer) >= maxlen) {
+		throw runtime_error("SMBios version truncated");
+	}
+	return string(s);
+};
+
+std::string SmBinaryReader::getVersion()
+{
+	return SmReader::getVersion();
+};
+
+std::string SmBinaryReader::getTableInfo()
+{
+	return "plonk";
+};
+
+inline bool SmBinaryReader::isValidType(u8 t)
+{
+// per spec 2.7... TODO vary based on version of this smbios
+	if ((t < 0) || (t > 127)) {
+		return false;
+	}
+	if ((t > 42) && (t < 126)) {
+		return false;
+	}
+	return true;
+};
+
+// allocates and frees memory, even if exception thrown.
+void SmBinaryReader::processEntryPoint()
+{
+	// SMBios Spec 2.7, sec 5.2.1
+	const size_t base = 0xF0000;
+	const size_t len = 0x10000;
+
+	// this can throw; let it
+	u8 *membuf = (u8 *)copymem(base, len, path);
+
+	bool found = false;
+	u8 *ep;
+	for (size_t fp = 0; fp < 0xFFF0; fp += 16) {
+		if (memcmp((unsigned char *)membuf + fp, "_SM_", 4) == 0 
+		    && fp <= 0xFFE0) {
+			ep = membuf + fp;
+			found = true;
+		}
+	}
+	if (!found) {
+		free(membuf);
+		throw runtime_error("failed to locate SMBIOS entry point");
+	}
+
+	// validate ep struct: correct length, checksums, string anchors 
+	size_t eplen = ep[0x05];
+	if (eplen < 0x1f || !checksum(ep, ep[0x05])
+	    || memcmp("_DMI_", ep + 0x10, 5) != 0
+	    || !checksum(ep + 0x10, 0x0f)) {
+		free(membuf);
+		// not necessarily a reason to quit but...
+		throw runtime_error("invalid entry point structure");
+	}
+
+	maxSize = WORD(ep + 0x08);
+	tableLen = WORD(ep + 0x16);
+	tablePtr = DWORD(ep + 0x18);
+	nStructs = WORD(ep + 0x1c);
+	free(membuf);
+};
+
+
+// non-member functions
+
