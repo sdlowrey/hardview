@@ -8,8 +8,6 @@
 
 void log(std::string);
 
-// need an enum of struct { int type, string name, bool required }
-
 struct SmStructTypes {
 	int type;
 	std::string description;
