@@ -42,12 +42,9 @@ u8 * advance(u8 *p, u8 len)
 {
 	p += len;
 	// walk to double null + 1;
-	printf("advancing to next struct");
 	while (! (WORD(p) == 0x0000)) {
-		printf(".");
 		p++;
 	}
-	printf("\n");
 	return p+2;
 }
 
@@ -73,14 +70,12 @@ SmBinaryReader::SmBinaryReader(string p)
 	path = p;
 	try {
 		processEntryPoint();
-		cout << "found it.. ";
 	}
 	catch (runtime_error err) {
 		throw;
 	}
 
 	table = copymem(tablePtr, tableLen, path);
-	cout << "got it" << endl;
 };
 
 SmBinaryReader::~SmBinaryReader()
@@ -90,14 +85,12 @@ SmBinaryReader::~SmBinaryReader()
 
 vector<SmElement> SmBinaryReader::getAllElements()
 {
-	cout << "nstructs: " << nStructs << endl;
-	u8 *p = reinterpret_cast<u8 *>(tablePtr);
+	u8 *p = table;
 	SmElementFactory elementFactory;
 	SmElement *element;
 	vector<SmElement> elements;
 
 	for (int i = 0; i < nStructs; ++i) {
-		cout << ".";
 		u8 len = p[1];
 		element = elementFactory.create(p);
 		// skip unsupported elements (null ptr)
@@ -107,7 +100,6 @@ vector<SmElement> SmBinaryReader::getAllElements()
 		p = advance(p, len);
 		// validate the pointer based on tableLen?
 	}
-	cout << endl << "processed " << nStructs << " structures" << endl;
 	return elements;
 };
 
