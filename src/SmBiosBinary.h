@@ -1,7 +1,9 @@
+#include "SmBios.h"
+
 // comment shows smbios spec equivalent
-typedef unsigned char u8;	// byte
-typedef unsigned short u16;	// word
-typedef unsigned int u32;	// dword
+typedef unsigned char u8;	// BYTE
+typedef unsigned short u16;	// WORD
+typedef unsigned int u32;	// DWORD
 typedef unsigned long u64;
 
 // This workaround is borrowed from dmidecode types.h.
@@ -17,6 +19,7 @@ typedef unsigned long u64;
 #	define DWORD(x) *reinterpret_cast<u32*>(x)
 #	define QWORD(x) *reinterpret_cast<u64*>(x)
 #else /* ALIGNMENT_WORKAROUND - use C-style casts*/
+
 static inline u64 U64(u32 low, u32 high)
 {
 	u64 self;
@@ -30,3 +33,35 @@ static inline u64 U64(u32 low, u32 high)
 #	define DWORD(x) (u32)((x)[0] + ((x)[1] << 8) + ((x)[2] << 16) + ((x)[3] << 24))
 #	define QWORD(x) (U64(DWORD(x), DWORD(x + 4)))
 #endif /* ALIGNMENT_WORKAROUND */
+
+class SmBiosBinary : public SmBios
+{
+public:
+	// Locate BIOS information immediately in system memory
+	SmBiosBinary() = default;
+
+	// Locate BIOS information in a dmidecode binary dump file
+	SmBiosBinary(std::string f) : SmBios(f) {}
+
+	~SmBiosBinary() noexcept(true);
+	
+	void getTable();
+	void get(BiosInfo& b);
+	void get(SmBiosInfo& s);
+
+private:
+	u8 *mapToProcess(const size_t b, const size_t l, const std::string p);
+	u8 *findTableEntryPoint(u8 *b);
+	void processEntryPoint(u8 *b);
+	u8 *advance(u8 *p, u8 l);
+	int checksum(const u8 *b, size_t l);
+
+	// SMBIOS Table Entry Point info
+	u16 maxSize;
+	u16 tableLen;
+	u32 tablePtr;
+	u16 nStructs;
+	u8 *table = nullptr;
+	u8 specMajorVer;
+	u8 specMinorVer;
+};

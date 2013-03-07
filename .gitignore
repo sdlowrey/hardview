@@ -25,6 +25,7 @@ autom4te.cache
 aclocal.m4
 libtool
 ltmain.sh
+*/.libs
 
 # Compiled
 *.o
