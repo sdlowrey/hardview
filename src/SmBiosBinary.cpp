@@ -11,6 +11,15 @@
 
 using namespace std;
 
+// I don't quite get why I need to define this, but the base class
+// calls its own ctor... which is empty... and therefore never hits
+// SmBiosBinary::getTable().
+
+SmBiosBinary::SmBiosBinary(string f) : SmBios(f) 
+{ 
+	getTable(); 
+}
+
 void SmBiosBinary::getTable()
 {
 	size_t base, length;
@@ -92,10 +101,10 @@ u8 * SmBiosBinary::mapToProcess(const size_t base,
 	return buf;
 };
 
-u8 * SmBiosBinary::advance(u8 *p, u8 len) 
+u8 * SmBiosBinary::nextStruct(u8 *p) 
 {
-	p += len;
-	// walk to double null + 1;
+	p += p[0x01]; // go to end of formatted struct
+	// walk to double null + 1, which is end of strings
 	while (! (WORD(p) == 0x0000)) {
 		p++;
 	}
@@ -113,14 +122,42 @@ int SmBiosBinary::checksum(const u8 *buf, size_t len)
 	return (sum == 0);
 };
 
-void  SmBiosBinary::get(BiosInfo& b)
+u8 *SmBiosBinary::findStructure(u8 typ)
 {
-	b.vendor = "quicktest";
+	int count = 1;
+	u8 *sp;
+	for (sp = table; 
+	     (*sp != typ) && (count != nStructs); 
+	     nextStruct(sp))
+		count++;
+	if (count == nStructs) {
+		return NULL;
+	}
+	return sp;
+}
+
+string SmBiosBinary::getString(u8 *sp, u8 strNum)
+{
+	sp += sp[0x01];
+	for (int i=1; i < strNum; ++i)
+		while (*sp != '\0') ++sp;  // TODO need a cap on this
+	return string(reinterpret_cast<char *>(sp));
+}
+
+void  SmBiosBinary::get(BiosInfo &b)
+{
+	// singular, so no need to iterate
+	u8 structType = 0;
+	u8 *s;
+
+	s = findStructure(structType);
+	if (s == NULL) throw runtime_error("BIOS Info not found");
+	b.vendor = getString(s, *(s + 0x04));
 };
 
-void  SmBiosBinary::get(SmBiosInfo& s)
+void  SmBiosBinary::get(SmBiosInfo &s)
 {
-	s.version = "2.6";
+	s.version = to_string(specMajorVer) + "." + to_string(specMinorVer);
 };
 
 SmBiosBinary::~SmBiosBinary() noexcept(true)

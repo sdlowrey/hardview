@@ -4,7 +4,7 @@
 typedef unsigned char u8;	// BYTE
 typedef unsigned short u16;	// WORD
 typedef unsigned int u32;	// DWORD
-typedef unsigned long u64;
+typedef unsigned long u64;	// QWORD
 
 // This workaround is borrowed from dmidecode types.h.
 // BIGENDIAN macro variants removed; add later if any platforms need it
@@ -41,11 +41,11 @@ public:
 	SmBiosBinary() = default;
 
 	// Locate BIOS information in a dmidecode binary dump file
-	SmBiosBinary(std::string f) : SmBios(f) {}
+	SmBiosBinary(std::string f);
 
 	~SmBiosBinary() noexcept(true);
 	
-	void getTable();
+	void getTable() override;
 	void get(BiosInfo& b);
 	void get(SmBiosInfo& s);
 
@@ -53,7 +53,9 @@ private:
 	u8 *mapToProcess(const size_t b, const size_t l, const std::string p);
 	u8 *findTableEntryPoint(u8 *b);
 	void processEntryPoint(u8 *b);
-	u8 *advance(u8 *p, u8 l);
+	u8 *findStructure(u8 t);
+	std::string getString(u8 *s, u8 n);
+	u8 *nextStruct(u8 *p);
 	int checksum(const u8 *b, size_t l);
 
 	// SMBIOS Table Entry Point info

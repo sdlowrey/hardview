@@ -32,13 +32,14 @@ class SmBios
 {
 public:
 	// Base constructor.  Sets infile to /dev/mem.
-	SmBios(const std::string f = "/dev/mem") : infile(f) { getTable(); }
+	SmBios(const std::string f);
 	virtual ~SmBios() = default;
 
 	virtual void getTable() {};
-
 	virtual void get(BiosInfo& b) {};
 	virtual void get(SmBiosInfo& s) {};
+
+	std::string source();
 
 protected:
 	std::string infile;
