@@ -136,6 +136,13 @@ u8 *SmBiosBinary::findStructure(u8 typ)
 	return sp;
 }
 
+u8 *SmBiosBinary::findFirstStruct(SmBiosBaseStruct &bs)
+{
+	u8 *p = findStructure(static_cast<u8>(bs.type));
+	if (p == NULL) throw runtime_error(bs.desc + " not found");
+	return p;
+}
+
 string SmBiosBinary::getString(u8 *sp, u8 strNum)
 {
 	sp += sp[0x01];
@@ -144,21 +151,18 @@ string SmBiosBinary::getString(u8 *sp, u8 strNum)
 	return string(reinterpret_cast<char *>(sp));
 }
 
-void  SmBiosBinary::get(BiosInfo &b)
-{
-	// singular, so no need to iterate
-	u8 structType = 0;
-	u8 *s;
-
-	s = findStructure(structType);
-	if (s == NULL) throw runtime_error("BIOS Info not found");
-	b.vendor = getString(s, *(s + 0x04));
-};
-
 void  SmBiosBinary::get(SmBiosInfo &s)
 {
 	s.version = to_string(specMajorVer) + "." + to_string(specMinorVer);
 };
+
+
+void  SmBiosBinary::get(BiosInfo &b)
+{
+	u8 *s = findFirstStruct(b);
+	b.vendor = getString(s, *(s + 0x04));
+};
+
 
 SmBiosBinary::~SmBiosBinary() noexcept(true)
 {

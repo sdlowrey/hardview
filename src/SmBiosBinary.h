@@ -54,6 +54,7 @@ private:
 	u8 *findTableEntryPoint(u8 *b);
 	void processEntryPoint(u8 *b);
 	u8 *findStructure(u8 t);
+	u8 *findFirstStruct(SmBiosBaseStruct &b);
 	std::string getString(u8 *s, u8 n);
 	u8 *nextStruct(u8 *p);
 	int checksum(const u8 *b, size_t l);
