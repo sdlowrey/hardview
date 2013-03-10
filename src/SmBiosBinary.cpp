@@ -146,8 +146,10 @@ u8 *SmBiosBinary::findFirstStruct(SmBiosBaseStruct &bs)
 string SmBiosBinary::getString(u8 *sp, u8 strNum)
 {
 	sp += sp[0x01];
-	for (int i=1; i < strNum; ++i)
-		while (*sp != '\0') ++sp;  // TODO need a cap on this
+	for (int i=1; i < strNum; ++i) {
+		while (*sp != '\0') ++sp;  // TODO need to limit this?
+		++sp; // start of next string
+	}
 	return string(reinterpret_cast<char *>(sp));
 }
 
@@ -161,6 +163,9 @@ void  SmBiosBinary::get(BiosInfo &b)
 {
 	u8 *s = findFirstStruct(b);
 	b.vendor = getString(s, *(s + 0x04));
+	b.version = getString(s, *(s + 0x05));
+	// could convert this to a Boost Gregorian date type
+	b.releaseDate = getString(s, *(s + 0x08));
 };
 
 
