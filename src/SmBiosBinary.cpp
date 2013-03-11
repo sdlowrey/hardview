@@ -126,9 +126,7 @@ u8 *SmBiosBinary::findStructure(u8 typ)
 {
 	int count = 1;
 	u8 *sp;
-	for (sp = table; 
-	     (*sp != typ) && (count != nStructs); 
-	     nextStruct(sp))
+	for (sp = table; (*sp != typ) && (count < nStructs); sp = nextStruct(sp))
 		count++;
 	if (count == nStructs) {
 		return NULL;
@@ -139,18 +137,44 @@ u8 *SmBiosBinary::findStructure(u8 typ)
 u8 *SmBiosBinary::findFirstStruct(SmBiosBaseStruct &bs)
 {
 	u8 *p = findStructure(static_cast<u8>(bs.type));
-	if (p == NULL) throw runtime_error(bs.desc + " not found");
+	if (p == NULL) 
+		throw runtime_error(bs.desc + " (type " + to_string(bs.type) + 
+				    ") structure not found");
 	return p;
+}
+
+// remove trailing spaces.  can overwrite bytes in our buffer.
+char *trim(char *s)
+{
+	char *p = s;
+	int len = strlen(p);
+
+	// do nothing if last character is not a space
+	if (p[len-1] != ' ') return s;
+
+	bool trimmed = false;
+	for (p += len; p > s; --p) {
+		if (*p == ' ') { 
+			*p = '\0'; 
+			trimmed = true; 
+		} else {
+			if (trimmed) return s;
+		}
+	}
+	return s;
 }
 
 string SmBiosBinary::getString(u8 *sp, u8 strNum)
 {
+	if (strNum == 0) {
+		return string("Not Specified");
+	}
 	sp += sp[0x01];
 	for (int i=1; i < strNum; ++i) {
 		while (*sp != '\0') ++sp;  // TODO need to limit this?
 		++sp; // start of next string
 	}
-	return string(reinterpret_cast<char *>(sp));
+	return string(trim(reinterpret_cast<char *>(sp)));
 }
 
 void  SmBiosBinary::get(SmBiosInfo &s)
@@ -161,13 +185,21 @@ void  SmBiosBinary::get(SmBiosInfo &s)
 
 void  SmBiosBinary::get(BiosInfo &b)
 {
-	u8 *s = findFirstStruct(b);
-	b.vendor = getString(s, *(s + 0x04));
-	b.version = getString(s, *(s + 0x05));
+	u8 *p = findFirstStruct(b);
+	b.vendor = getString(p, *(p + 0x04));
+	b.version = getString(p, *(p + 0x05));
 	// could convert this to a Boost Gregorian date type
-	b.releaseDate = getString(s, *(s + 0x08));
+	b.releaseDate = getString(p, *(p + 0x08));
 };
 
+void  SmBiosBinary::get(SystemInfo &s)
+{
+	u8 *p = findFirstStruct(s);
+	s.manufacturer = getString(p, p[0x04]);
+	s.product = getString(p, p[0x05]);
+	s.version = getString(p, p[0x06]);
+	s.serial = getString(p, p[0x07]);
+};
 
 SmBiosBinary::~SmBiosBinary() noexcept(true)
 {

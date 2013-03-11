@@ -67,8 +67,9 @@ public:
 	virtual ~SmBios() = default;
 
 	virtual void getTable() {};
-	virtual void get(BiosInfo& b) {};
 	virtual void get(SmBiosInfo& s) {};
+	virtual void get(BiosInfo& b) {};
+	virtual void get(SystemInfo& b) {};
 
 	std::string source();
 

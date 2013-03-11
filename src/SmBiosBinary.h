@@ -46,8 +46,9 @@ public:
 	~SmBiosBinary() noexcept(true);
 	
 	void getTable() override;
-	void get(BiosInfo& b);
 	void get(SmBiosInfo& s);
+	void get(BiosInfo& b);
+	void get(SystemInfo& b);
 
 private:
 	u8 *mapToProcess(const size_t b, const size_t l, const std::string p);
