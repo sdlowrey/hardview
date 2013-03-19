@@ -17,7 +17,10 @@ using namespace std;
 
 SmBiosBinary::SmBiosBinary(string f) : SmBios(f) 
 { 
-	getTable(); 
+	getTable();
+	getSmBiosInfo();
+	getBiosInfo();
+	getSystemInfo();
 }
 
 void SmBiosBinary::getTable()
@@ -65,8 +68,8 @@ void SmBiosBinary::processEntryPoint(u8 *ep)
 	}
 
 	maxSize = WORD(ep + 0x08);
-	specMajorVer = ep[0x06];
-	specMinorVer = ep[0x07];
+	smMajor = ep[0x06];
+	smMinor = ep[0x07];
 	tableLen = WORD(ep + 0x16);
 	tablePtr = DWORD(ep + 0x18);
 	nStructs = WORD(ep + 0x1c);
@@ -177,28 +180,28 @@ string SmBiosBinary::getString(u8 *sp, u8 strNum)
 	return string(trim(reinterpret_cast<char *>(sp)));
 }
 
-void  SmBiosBinary::get(SmBiosInfo &s)
+void  SmBiosBinary::getSmBiosInfo()
 {
-	s.version = to_string(specMajorVer) + "." + to_string(specMinorVer);
+	smbInfo.version = to_string(smMajor) + "." + to_string(smMinor);
 };
 
 
-void  SmBiosBinary::get(BiosInfo &b)
+void  SmBiosBinary::getBiosInfo()
 {
-	u8 *p = findFirstStruct(b);
-	b.vendor = getString(p, *(p + 0x04));
-	b.version = getString(p, *(p + 0x05));
+	u8 *p = findFirstStruct(biosInfo);
+	biosInfo.vendor = getString(p, *(p + 0x04));
+	biosInfo.version = getString(p, *(p + 0x05));
 	// could convert this to a Boost Gregorian date type
-	b.releaseDate = getString(p, *(p + 0x08));
+	biosInfo.releaseDate = getString(p, *(p + 0x08));
 };
 
-void  SmBiosBinary::get(SystemInfo &s)
+void  SmBiosBinary::getSystemInfo()
 {
-	u8 *p = findFirstStruct(s);
-	s.manufacturer = getString(p, p[0x04]);
-	s.product = getString(p, p[0x05]);
-	s.version = getString(p, p[0x06]);
-	s.serial = getString(p, p[0x07]);
+	u8 *p = findFirstStruct(systemInfo);
+	systemInfo.manufacturer = getString(p, p[0x04]);
+	systemInfo.product = getString(p, p[0x05]);
+	systemInfo.version = getString(p, p[0x06]);
+	systemInfo.serial = getString(p, p[0x07]);
 };
 
 SmBiosBinary::~SmBiosBinary() noexcept(true)

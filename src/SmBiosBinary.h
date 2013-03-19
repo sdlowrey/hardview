@@ -45,12 +45,12 @@ public:
 
 	~SmBiosBinary() noexcept(true);
 	
-	void getTable() override;
-	void get(SmBiosInfo& s);
-	void get(BiosInfo& b);
-	void get(SystemInfo& b);
-
 private:
+	void getTable() override;
+	void getSmBiosInfo();
+	void getBiosInfo();
+	void getSystemInfo();
+
 	u8 *mapToProcess(const size_t b, const size_t l, const std::string p);
 	u8 *findTableEntryPoint(u8 *b);
 	void processEntryPoint(u8 *b);
@@ -66,6 +66,6 @@ private:
 	u32 tablePtr;
 	u16 nStructs;
 	u8 *table = nullptr;
-	u8 specMajorVer;
-	u8 specMinorVer;
+	u8 smMajor;
+	u8 smMinor;
 };

@@ -66,14 +66,18 @@ public:
 	SmBios(const std::string f);
 	virtual ~SmBios() = default;
 
-	virtual void getTable() {};
-	virtual void get(SmBiosInfo& s) {};
-	virtual void get(BiosInfo& b) {};
-	virtual void get(SystemInfo& b) {};
-
 	std::string source();
+	SmBiosInfo smbInfo;
+	BiosInfo biosInfo;
+	SystemInfo systemInfo;
 
 protected:
 	std::string infile;
+
+private:
+	virtual void getTable() {};
+	virtual void getSmBiosInfo() {};
+	virtual void getBiosInfo() {};
+	virtual void getSystemInfo() {};
 };
 
