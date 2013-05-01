@@ -34,16 +34,16 @@ void SmBiosBinary::getTable()
 		length = 32;	// table entry point size
 	}
 	u8 *buf = mapToProcess(base, length, infile);
-	u8 *ep = findTableEntryPoint(buf);
-	try {
-		processEntryPoint(ep);
-	} catch (runtime_error e) {
-		free(buf);
-		throw e;
-	}
-	free(buf);
-	table = mapToProcess(tablePtr, tableLen, infile);	
-};
+	size_t eplen = 0x1f;
+	memcpy((u8 *)&tep, (u8 *)findTableEntryPoint(buf), eplen);
+ 	try {
+ 		processEntryPoint();
+ 	} catch (runtime_error e) {
+ 		free(buf);
+ 		throw e;
+ 	}
+ 	table = mapToProcess(tep.tableAddr, tep.tableLength, infile);
+}
 
 u8 *SmBiosBinary::findTableEntryPoint(u8 *buf)
 {
@@ -57,23 +57,16 @@ u8 *SmBiosBinary::findTableEntryPoint(u8 *buf)
 	throw runtime_error("failed to locate SMBIOS entry point");
 };
 
-void SmBiosBinary::processEntryPoint(u8 *ep)
+void SmBiosBinary::processEntryPoint()
 {
 	// validate ep struct: correct length, checksums, string anchors 
-	size_t eplen = ep[0x05];
-	if (eplen < 0x1f || !checksum(ep, ep[0x05])
-	    || memcmp("_DMI_", ep + 0x10, 5) != 0
-	    || !checksum(ep + 0x10, 0x0f)) {
+	if (tep.length < 0x1f || !checksum(reinterpret_cast<u8*>(&tep), tep.length)
+	    || memcmp("_DMI_", tep.intermediateAnchor, 5) != 0
+	    || !checksum(reinterpret_cast<u8*>(tep.intermediateAnchor), 0x0f)) {
 		throw runtime_error("invalid entry point structure");
 	}
-
-	maxSize = WORD(ep + 0x08);
-	smMajor = ep[0x06];
-	smMinor = ep[0x07];
-	tableLen = WORD(ep + 0x16);
-	tablePtr = DWORD(ep + 0x18);
-	nStructs = WORD(ep + 0x1c);
 };
+
 
 // based on dmidecode mem_chunk
 u8 * SmBiosBinary::mapToProcess(const size_t base, 
@@ -129,9 +122,9 @@ u8 *SmBiosBinary::findStructure(u8 typ)
 {
 	int count = 1;
 	u8 *sp;
-	for (sp = table; (*sp != typ) && (count < nStructs); sp = nextStruct(sp))
+	for (sp = table; (*sp != typ) && (count < tep.numStructs); sp = nextStruct(sp))
 		count++;
-	if (count == nStructs) {
+	if (count == tep.numStructs) {
 		return NULL;
 	}
 	return sp;
@@ -182,7 +175,7 @@ string SmBiosBinary::getString(u8 *sp, u8 strNum)
 
 void  SmBiosBinary::getSmBiosInfo()
 {
-	smbInfo.version = to_string(smMajor) + "." + to_string(smMinor);
+	smbInfo.version = to_string(tep.versionMajor) + "." + to_string(tep.versionMinor);
 };
 
 
