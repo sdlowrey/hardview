@@ -1,7 +1,23 @@
 #pragma once
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+enum StructType { 
+	Bios, 
+	System, 
+	Enclosure,
+};
+
+// SMBIOS structures are translated into key-value containers...
+typedef std::map<std::string, std::string> StructMap;
+
+// Many structure types can appear more than once...
+typedef std::vector<StructMap> StructVector;
+
+// Slot each structure vector into a map; the key is the type.
+typedef std::map<StructType, StructVector> SmBiosMap;
 
 struct SmBiosInfo 
 {
@@ -69,10 +85,12 @@ public:
 	std::string source();
 	SmBiosInfo smbInfo;
 	BiosInfo biosInfo;
-	SystemInfo systemInfo;
+	StructMap getNode(StructType t);
+	virtual SmBiosMap getAllStructs();
 
 protected:
 	std::string infile;
+	SmBiosMap smbios;
 
 private:
 	virtual void getTable() {};

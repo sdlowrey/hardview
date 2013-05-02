@@ -12,6 +12,9 @@ string SmBios::source()
 	return infile;
 }
 
+StructMap SmBios::getNode(StructType t)
+{
+}
 /*
 void SmBios::get(BiosInfo& b)
 {
