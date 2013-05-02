@@ -79,10 +79,11 @@ class SmBios
 {
 public:
 	// Base constructor.  Sets infile to /dev/mem.
-	SmBios(const std::string f);
+	SmBios(const std::string f) : infile(f) {};
 	virtual ~SmBios() = default;
 
 	std::string source();
+	std::string dumpText();
 	SmBiosInfo smbInfo;
 	BiosInfo biosInfo;
 	StructMap getNode(StructType t);

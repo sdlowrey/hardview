@@ -2,11 +2,6 @@
 
 using namespace std;
 
-SmBios::SmBios(string f = "/dev/mem") : infile(f) 
-{ 
-	getTable(); 
-}
-
 string SmBios::source()
 {
 	return infile;
@@ -15,6 +10,13 @@ string SmBios::source()
 StructMap SmBios::getNode(StructType t)
 {
 }
+
+string SmBios::dumpText()
+{
+	//for key,val in structs, 
+	return "dumpText: not implemented";
+}
+
 /*
 void SmBios::get(BiosInfo& b)
 {

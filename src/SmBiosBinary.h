@@ -34,6 +34,24 @@ static inline u64 U64(u32 low, u32 high)
 #	define QWORD(x) (U64(DWORD(x), DWORD(x + 4)))
 #endif /* ALIGNMENT_WORKAROUND */
 
+typedef struct __attribute__ ((packed))
+{
+	u8 anchorStr[4];
+	u8 checksum;
+	u8 length;
+	u8 versionMajor;
+	u8 versionMinor;
+	u16 maxStructSize;
+	u8 epRevision;
+	u8 formattedArea[5];
+	u8 intermediateAnchor[5];
+	u8 intermediateChecksum;
+	u16 tableLength;
+	u32 tableAddr;
+	u16 numStructs;
+	u8 bcdRevision;
+}  TableEntryPoint;
+
 class SmBiosBinary : public SmBios
 {
 public:
@@ -54,19 +72,14 @@ private:
 
 	u8 *mapToProcess(const size_t b, const size_t l, const std::string p);
 	u8 *findTableEntryPoint(u8 *b);
-	void processEntryPoint(u8 *b);
+	void processEntryPoint(void);
 	u8 *findStructure(u8 t);
 	u8 *findFirstStruct(SmBiosBaseStruct &b);
 	std::string getString(u8 *s, u8 n);
 	u8 *nextStruct(u8 *p);
 	int checksum(const u8 *b, size_t l);
 
-	// SMBIOS Table Entry Point info
-	u16 maxSize;
-	u16 tableLen;
-	u32 tablePtr;
-	u16 nStructs;
+	TableEntryPoint tep;
+
 	u8 *table = nullptr;
-	u8 smMajor;
-	u8 smMinor;
 };
