@@ -44,7 +44,8 @@ public:
 	SmBiosBinary(std::string f);
 
 	~SmBiosBinary() noexcept(true);
-	
+	SmBiosMap getAllStructs() override;
+
 private:
 	void getTable() override;
 	void getSmBiosInfo();
