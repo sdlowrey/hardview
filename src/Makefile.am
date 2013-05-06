@@ -7,6 +7,10 @@ AM_CPPFLAGS = -std=c++0x -g -O0
 
 # Use this to static link for dev
 noinst_LIBRARIES = libsmbios.a
-libsmbios_a_SOURCES = SmBios.cpp SmBiosBinary.cpp
+libsmbios_a_SOURCES = SmBios.cpp SmBiosBinary.cpp SmBiosFactory.cpp
 
-include_HEADERS = SmBios.h SmBiosBinary.h
+include_HEADERS = SmBios.h SmBiosBinary.h SmBiosFactory.h
+
+bin_PROGRAMS = smdump
+smdump_SOURCES = smdump.cpp
+smdump_LDADD = libsmbios.a

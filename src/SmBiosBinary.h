@@ -52,6 +52,13 @@ typedef struct __attribute__ ((packed))
 	u8 bcdRevision;
 }  TableEntryPoint;
 
+typedef struct __attribute__ ((packed))
+{
+	u8 type;
+	u8 length;
+	u16 handle;
+} StructHeader;
+
 class SmBiosBinary : public SmBios
 {
 public:
@@ -77,6 +84,8 @@ private:
 	std::string getString(u8 *s, u8 n);
 	u8 *nextStruct(u8 *p);
 	int checksum(const u8 *b, size_t l);
+
+	std::string printAll() override;
 
 	TableEntryPoint tep;
 

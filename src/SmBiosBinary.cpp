@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <sys/mman.h>
@@ -99,8 +100,8 @@ u8 * SmBiosBinary::mapToProcess(const size_t base,
 
 u8 * SmBiosBinary::nextStruct(u8 *p) 
 {
-	p += p[0x01]; // go to end of formatted struct
-	// walk to double null + 1, which is end of strings
+	p += ((StructHeader *)p)->length; // go to end of formatted struct
+	// walk to end of string list
 	while (! (WORD(p) == 0x0000)) {
 		p++;
 	}
@@ -118,11 +119,13 @@ int SmBiosBinary::checksum(const u8 *buf, size_t len)
 	return (sum == 0);
 };
 
-u8 *SmBiosBinary::findStructure(u8 typ)
+u8 *SmBiosBinary::findStructure(u8 t)
 {
 	int count = 1;
 	u8 *sp;
-	for (sp = table; (*sp != typ) && (count < tep.numStructs); sp = nextStruct(sp))
+	for (sp = table; 
+	     (((StructHeader *)sp)->type != t) && (count < tep.numStructs); 
+	     sp = nextStruct(sp))
 		count++;
 	if (count == tep.numStructs) {
 		return NULL;
@@ -137,6 +140,34 @@ u8 *SmBiosBinary::findFirstStruct(SmBiosBaseStruct &bs)
 		throw runtime_error(bs.desc + " (type " + to_string(bs.type) + 
 				    ") structure not found");
 	return p;
+}
+
+string SmBiosBinary::printAll()
+{
+	u8 *h = table;
+	string s, all;
+	for (int i = 0; i < tep.numStructs; i++) {
+		switch (((StructHeader *)h)->type) {
+		case 0:
+			s = "BIOS";
+			break;
+			;;
+		case 1:
+			s = "System";
+			break;
+			;;
+		case 3:
+			s = "Enclosure";
+			break;
+			;;
+		default:
+			s = "Whatever";
+			;;
+		}
+		all = all + ", " + s;
+		h = nextStruct(h);
+	}
+	return all;
 }
 
 // remove trailing spaces.  can overwrite bytes in our buffer.

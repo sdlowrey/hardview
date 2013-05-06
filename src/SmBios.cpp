@@ -7,6 +7,11 @@ string SmBios::source()
 	return infile;
 }
 
+string SmBios::printAll()
+{
+	return "printAll: not implemented";
+}
+
 string SmBios::dumpText()
 {
 	//for key,val in structs, 

@@ -68,6 +68,7 @@ public:
 
 	std::string source();
 	std::string dumpText();
+	virtual std::string printAll();
 	SmBiosInfo smbInfo;
 	BiosInfo biosInfo;
 	SystemInfo systemInfo;
