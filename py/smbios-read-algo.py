@@ -39,6 +39,19 @@ def getTable(f, ep):
     f.seek(ep['address'])
     return f.read(ep['length'])
 
+def walkHeaders(ep, table):
+    offset = 0
+    for i in range(ep['scount']):
+        h = struct.unpack_from('2BH', table, offset)
+        print 'Type: %d  Length: %d  Handle: %04x' %  h
+        #print 'starting offset:', offset
+        offset += h[1]
+        #print 'end of formatted:', offset
+        strings = table[offset:]  # end formatted structure
+        offset += strings.find('\x00\x00') + 2 # end string section
+        #print 'end of strings:', offset
+        
+        
 if __name__ == '__main__':
     inpath = '/dev/mem'
     if len(sys.argv) > 1:
@@ -46,5 +59,7 @@ if __name__ == '__main__':
     infile, rawEP = findEntryPoint(inpath)
     mappedEP = parseEntryPoint(rawEP)
     table = getTable(infile, mappedEP)
+    walkHeaders(mappedEP, table)
+    infile.close()
     
     
