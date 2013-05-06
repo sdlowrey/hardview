@@ -21,7 +21,13 @@ SmBiosBinary::SmBiosBinary(string f) : SmBios(f)
 	getTable();
 	getSmBiosInfo();
 	getBiosInfo();
-	getSystemInfo();
+	smbios = getAllStructs();
+}
+
+SmBiosMap SmBiosBinary::getAllStructs()
+{
+	// walk the table
+	// save what we want from each structure type
 }
 
 void SmBiosBinary::getTable()
@@ -100,8 +106,13 @@ u8 * SmBiosBinary::mapToProcess(const size_t base,
 
 u8 * SmBiosBinary::nextStruct(u8 *p) 
 {
+<<<<<<< HEAD
 	p += ((StructHeader *)p)->length; // go to end of formatted struct
 	// walk to end of string list
+=======
+	p += p[0x01]; // go to end of formatted struct
+	// walk to double null, which is end of strings
+>>>>>>> 1287f42780399541dca39e4cd3dd71ead6733dad
 	while (! (WORD(p) == 0x0000)) {
 		p++;
 	}
@@ -217,15 +228,6 @@ void  SmBiosBinary::getBiosInfo()
 	biosInfo.version = getString(p, *(p + 0x05));
 	// could convert this to a Boost Gregorian date type
 	biosInfo.releaseDate = getString(p, *(p + 0x08));
-};
-
-void  SmBiosBinary::getSystemInfo()
-{
-	u8 *p = findFirstStruct(systemInfo);
-	systemInfo.manufacturer = getString(p, p[0x04]);
-	systemInfo.product = getString(p, p[0x05]);
-	systemInfo.version = getString(p, p[0x06]);
-	systemInfo.serial = getString(p, p[0x07]);
 };
 
 SmBiosBinary::~SmBiosBinary() noexcept(true)

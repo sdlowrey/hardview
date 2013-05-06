@@ -7,9 +7,8 @@ string SmBios::source()
 	return infile;
 }
 
-string SmBios::printAll()
+StructMap SmBios::getNode(StructType t)
 {
-	return "printAll: not implemented";
 }
 
 string SmBios::dumpText()
