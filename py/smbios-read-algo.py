@@ -39,18 +39,34 @@ def getTable(f, ep):
     f.seek(ep['address'])
     return f.read(ep['length'])
 
-def walkHeaders(ep, table):
-    offset = 0
+def toHeader(s):
+    return struct.unpack_from('2BH', s)
+   
+def parseStruct(_struct, _strings):
+    h = toHeader(_struct)
+    print 'Type: %d  Length: %d  Handle: %04x' %  h
+    if h[0] == 0:
+        bios = struct.unpack_from('2BH2BQ4B', _struct[4:])
+        print bios
+        print _strings
+
+def parseTable(ep, table):
+    typesWanted = set([0,1,7])
+    typesFound = set()
     for i in range(ep['scount']):
-        h = struct.unpack_from('2BH', table, offset)
-        print 'Type: %d  Length: %d  Handle: %04x' %  h
-        #print 'starting offset:', offset
-        offset += h[1]
-        #print 'end of formatted:', offset
-        strings = table[offset:]  # end formatted structure
-        offset += strings.find('\x00\x00') + 2 # end string section
-        #print 'end of strings:', offset
-        
+        h = toHeader(table)
+        _type = h[0]
+        length = h[1]
+        _struct = table[:length]
+        table = table[length:]
+        end = table.find('\x00\x00')+2
+        _strings = table[:end].split('\x00')
+        table = table[end:]
+        if _type in typesWanted:
+            typesFound.add(_type)
+            parseStruct(_struct, _strings)
+    print 'found wanted types', typesFound
+       
         
 if __name__ == '__main__':
     inpath = '/dev/mem'
@@ -59,7 +75,7 @@ if __name__ == '__main__':
     infile, rawEP = findEntryPoint(inpath)
     mappedEP = parseEntryPoint(rawEP)
     table = getTable(infile, mappedEP)
-    walkHeaders(mappedEP, table)
+    parseTable(mappedEP, table)
     infile.close()
     
     
