@@ -3,7 +3,11 @@
 #
 import struct
 import sys
+from collections import namedtuple
 
+Header = namedtuple('Header', 'type len handle')
+Bios = namedtuple('Bios', 'vendor version startaddr reldate romsz chars ext1 ext2 relmaj relmin')
+System = namedtuple('System', 'mfr prod ver serial uuid wake sku fam')
 
 def findEntryPoint(path):
     try:
@@ -42,13 +46,18 @@ def getTable(f, ep):
 def toHeader(s):
     return struct.unpack_from('2BH', s)
    
-def parseStruct(_struct, _strings):
+def toString(strs, idx):
+    return strs[idx-1]
+
+def parseStruct(_struct, _str):
     h = toHeader(_struct)
     print 'Type: %d  Length: %d  Handle: %04x' %  h
+    print 'Strings: ' + ", ".join(_str)
     if h[0] == 0:
-        bios = struct.unpack_from('2BH2BQ4B', _struct[4:])
-        print bios
-        print _strings
+        fmt = '2B H 2B L 2B 2B'
+        print "Format Size: ", struct.calcsize(fmt)
+        b = Bios._make(struct.unpack_from(fmt, _struct[4:]))
+        print toString(_str, b.vendor), toString(_str, b.version), toString(_str, b.reldate) 
 
 def parseTable(ep, table):
     typesWanted = set([0,1,7])
@@ -61,6 +70,8 @@ def parseTable(ep, table):
         table = table[length:]
         end = table.find('\x00\x00')+2
         _strings = table[:end].split('\x00')
+        # shave off empty items created by double-null at end of string list
+        _strings = _strings[:len(_strings)-2]
         table = table[end:]
         if _type in typesWanted:
             typesFound.add(_type)
