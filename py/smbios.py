@@ -21,10 +21,24 @@ EntryPoint = namedtuple(
         'fmtd',
         'ianchor',
         'icksum',
-        'tablen',
-        'tabaddr',
+        'tlen',
+        'taddr',
         'numstrucs']
 #        'bcdrev']
+    )
+
+Bios = namedtuple(
+    'Bios', [
+        'vendor', 
+        'version', 
+        'startaddr',
+        'reldate',
+        'romsz',
+        'chars', 
+        'ext1', 
+        'ext2', 
+        'relmaj',
+        'relmin']
     )
 
 class SmBios:
@@ -60,9 +74,7 @@ class SmBios:
         if anchor != '_SM_':
             raise Exception('Unable to find SMBIOS Entry Point')
         buf = self._in.read(0x1f)
-        self._parseEntryPoint(buf)
 
-    def _parseEntryPoint(self, buf):
         epFmt = '=4s 4B H B 5s 5s B H I H'
         #print 'epFmt sz: %x' % struct.calcsize(epFmt)
         ep = struct.unpack_from(epFmt, buf)
@@ -70,8 +82,7 @@ class SmBios:
 
     def parse(self):
         self._getEntryPoint()
-        #self._getTable()
-        #self._parseTable()
+        self._table = SmBiosTable(self._entryPoint, self._in)
         self._cleanup()
 
     def briefTextSummary(self):
@@ -80,12 +91,41 @@ class SmBios:
             self._entryPoint.vermaj,
             self._entryPoint.vermin) 
 
+    def dumpHeaders(self):
+        for h in self._table:
+            print h
+
+class SmBiosTable:
+    def __init__(self, entryPoint, infile):
+        self._in = infile
+        infile.seek(entryPoint.taddr)
+        self._table = infile.read(entryPoint.tlen)
+        self._nStructs = entryPoint.numstrucs
+        self._count = 0
+        self._offset = 0
+
+    def __iter__(self,):
+        return self
+
+    def next(self):
+        if self._count == self._nStructs:
+            raise StopIteration
+
+    def _parseStruct(self, hdr,  struc, strng):
+        # unfinished
+        fmt = StructureFormat(hdr.type)
+        # instead of...
+        fmt = '2B H 2B L 2B 2B'
+        bios = Bios._make(struct.unpack_from(fmt, sbuf))
+        print bios
+
 if __name__ == '__main__':
     inpath = '/dev/mem'
     if len(sys.argv) > 1:
         inpath = sys.argv[1]
     s = SmBios(inpath)
     s.parse()
+    s.dumpHeaders()
 #    except:
 #        print "smbios err:", sys.exc_info()[0]
     print s
